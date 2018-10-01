@@ -1,4 +1,4 @@
-function [C,phi,S12,S1,S2,f,confC,phistd,Cerr]=coherencysegc(data1,data2,win,params)
+function [C,phi,S12,S1,S2,f,confC,phistd,Cerr]=coherencysegc(data1,data2,win,params,segave)
 % Multi-taper coherency, cross-spectrum and individual spectra with segmenting - continuous process
 %   computed by segmenting two univariate time series into chunks
 %
@@ -58,6 +58,7 @@ if nargin < 3; error('Need data1 and data2 and size of segment'); end;
 if nargin < 4; params=[]; end;
 [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params);
 clear tapers pad fpass trialave
+if nargin < 5 || isempty(segave); segave=1; end
 if nargout > 8 && err(1)~=2; 
     error('Cerr computed only for Jackknife. Correct inputs and run again');
 end;
@@ -75,8 +76,7 @@ E=0:win:T-win; % fictitious event triggers
 win=[0 win]; % use window length to define left and right limits of windows around triggers
 data1=createdatamatc(data1,E,Fs,win); % segmented data 1
 data2=createdatamatc(data2,E,Fs,win); % segmented data 2
-params.trialave=1;
-params.trialave=1;
+params.trialave=segave;
 if err==0;
    [C,phi,S12,S1,S2,f]=coherencyc(data1,data2,params); % compute coherency for segmented data
 elseif err(1)==1;

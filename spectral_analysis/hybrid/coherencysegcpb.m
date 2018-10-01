@@ -81,9 +81,9 @@ win=[0 win]; % use window length to define left and right limits of windows arou
 data1=createdatamatc(data1,E,Fs,win); % segmented data 1
 data2=createdatamatpb(data2,E,Fs,win); % segmented data 2
 params.trialave=segave;
-if nargout==7;
+if nargout<=7;
   [C,phi,S12,S1,S2,f,zerosp]=coherencycpb(data1,data2,params,fscorr); % compute coherency for segmented data
-elseif nargout==9; 
+elseif nargout<=9; 
   [C,phi,S12,S1,S2,f,zerosp,confC,phistd]=coherencycpb(data1,data2,params,fscorr); % compute coherency for segmented data
 elseif nargout==10;
   [C,phi,S12,S1,S2,f,zerosp,confC,phistd,Cerr]=coherencycpb(data1,data2,params,fscorr); % compute coherency for segmented data

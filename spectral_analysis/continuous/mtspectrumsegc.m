@@ -72,7 +72,7 @@ nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
 global CHRONUXGPU
-if gpuDeviceCount && CHRONUXGPU
+if ~isempty(CHRONUXGPU) && CHRONUXGPU && gpuDeviceCount 
   J=mtfftc(gpuArray(data), gpuArray(tapers), nfft, Fs); 
 else
   J=mtfftc(data,tapers,nfft,Fs); % compute tapered fourier transforms

@@ -79,7 +79,7 @@ nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
 global CHRONUXGPU
-if gpuDeviceCount && CHRONUXGPU
+if ~isempty(CHRONUXGPU) && CHRONUXGPU && gpuDeviceCount 
   [J,Msp,Nsp]=mtfftpb(gpuArray(data), gpuArray(tapers), nfft);  
 else
   [J,Msp,Nsp]=mtfftpb(data,tapers,nfft);  

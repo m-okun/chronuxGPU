@@ -75,14 +75,20 @@ zerosp=zeros(1,Ch); % intialize the zerosp variable
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-J1=mtfftc(data1,tapers,nfft,Fs); % fourier transform of continuous data
-[J2,Msp2,Nsp2]=mtfftpb(data2,tapers,nfft); % fourier transform of point process data
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+  J1=mtfftc(gpuArray(data1), gpuArray(tapers), nfft, Fs); 
+  [J2,Msp2,Nsp2]=mtfftpb(gpuArray(data2), gpuArray(tapers), nfft); 
+else
+  J1=mtfftc(data1,tapers,nfft,Fs); % fourier transform of continuous data
+  [J2,Msp2,Nsp2]=mtfftpb(data2,tapers,nfft); % fourier transform of point process data
+end
 zerosp(Nsp2==0)=1; % set the trials where no spikes were found to have zerosp=1
 J1=J1(findx,:,:);
 J2=J2(findx,:,:);
-S12=squeeze(mean(conj(J1).*J2,2));
-S1=squeeze(mean(conj(J1).*J1,2));
-S2=squeeze(mean(conj(J2).*J2,2));
+S12=gather(squeeze(mean(conj(J1).*J2,2)));
+S1=gather(squeeze(mean(conj(J1).*J1,2)));
+S2=gather(squeeze(mean(conj(J2).*J2,2)));
 if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
 C12=S12./sqrt(S1.*S2);
 C=abs(C12);

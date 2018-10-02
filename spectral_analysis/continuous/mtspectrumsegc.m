@@ -71,10 +71,16 @@ N=size(data,1); % length of segmented data
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-J=mtfftc(data,tapers,nfft,Fs); % compute tapered fourier transforms
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+  J=mtfftc(gpuArray(data), gpuArray(tapers), nfft, Fs); 
+else
+  J=mtfftc(data,tapers,nfft,Fs); % compute tapered fourier transforms
+end
 J=J(findx,:,:); % restrict to specified frequencies
 S=squeeze(mean(conj(J).*J,2)); % spectra of non-overlapping segments (average over tapers)
 if segave==1; SS=squeeze(mean(S,2)); else; SS=S;end; % mean of the spectrum averaged across segments
+SS = gather(abs(SS)); % gather leaves the variable as complex, in this case the imaginary part is 0 
 if nargout > 2
     lS=log(S); % log spectrum for nonoverlapping segments
     varS=var(lS',1)'; % variance of log spectrum

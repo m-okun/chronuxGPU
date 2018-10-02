@@ -29,7 +29,7 @@ if trialave
    dim=K*C;
    C=1;
    dof=2*dim;
-   if nargin==5; dof = fix(1/(1/dof + 1/(2*sum(numsp)))); end
+   if nargin==5; dof = gather(fix(1/(1/dof + 1/(2*sum(numsp))))); end
    J=reshape(J,nf,dim);
 else
    dim=K;

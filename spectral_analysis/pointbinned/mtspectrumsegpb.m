@@ -61,7 +61,7 @@ if nargin < 3; params=[]; end;
 if nargin < 4 || isempty(segave); segave=1; end;
 [tapers,pad,Fs,fpass,err,trialave,params]=getparams(params);
 clear params trialave
-if nargin < 3 || isempty(fscorr); fscorr=0;end;
+if nargin < 5 || isempty(fscorr); fscorr=0;end;
 
 if nargout > 4 && err(1)==0; 
 %   Cannot compute error bars with err(1)=0. Need to change params and run again. 
@@ -78,11 +78,17 @@ N=size(data,1); % length of segmented data
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-[J,Msp,Nsp]=mtfftpb(data,tapers,nfft);  
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+  [J,Msp,Nsp]=mtfftpb(gpuArray(data), gpuArray(tapers), nfft);  
+else
+  [J,Msp,Nsp]=mtfftpb(data,tapers,nfft);  
+end
 J=J(findx,:,:);
 R=Msp*Fs;
 S=squeeze(mean(conj(J).*J,2)); % spectra of non-overlapping segments (averaged over tapers)
 if segave==1; SS=squeeze(mean(S,2));R=mean(R);else;SS=S;end;% mean of the spectrum averaged across segments
+SS = gather(SS); 
 if nargout > 3
     lS=log(SS); % log spectrum for nonoverlapping segments
 %     varS=var(lS,1,2); % variance of log spectrum

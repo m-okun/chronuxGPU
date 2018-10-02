@@ -58,9 +58,14 @@ N=size(data,1);
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-J=mtfftc(data,tapers,nfft,Fs);
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+  J=mtfftc(gpuArray(data), gpuArray(tapers), nfft, Fs);
+else
+  J=mtfftc(data,tapers,nfft,Fs);
+end
 J=J(findx,:,:);
-S=permute(mean(conj(J).*J,2),[1 3 2]);
+S=gather(abs(permute(mean(conj(J).*J,2),[1 3 2]))); % gather leaves the variable as complex, in this case the imaginary part is 0 
 if trialave; S=squeeze(mean(S,2));else S=squeeze(S);end;
 if nargout==3; 
    Serr=specerr(S,J,err,trialave);

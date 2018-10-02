@@ -69,12 +69,18 @@ N=check_consistency(data1,data2);
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-J1=mtfftc(data1,tapers,nfft,Fs);
-J2=mtfftc(data2,tapers,nfft,Fs);
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+  J1=mtfftc(gpuArray(data1), gpuArray(tapers), nfft, Fs);
+  J2=mtfftc(gpuArray(data2), gpuArray(tapers), nfft, Fs);
+else
+  J1=mtfftc(data1,tapers,nfft,Fs);
+  J2=mtfftc(data2,tapers,nfft,Fs);
+end
 J1=J1(findx,:,:); J2=J2(findx,:,:);
-S12=squeeze(mean(conj(J1).*J2,2));
-S1=squeeze(mean(conj(J1).*J1,2));
-S2=squeeze(mean(conj(J2).*J2,2));
+S12=gather(squeeze(mean(conj(J1).*J2,2)));
+S1=gather(squeeze(mean(conj(J1).*J1,2)));
+S2=gather(squeeze(mean(conj(J2).*J2,2)));
 if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
 C12=S12./sqrt(S1.*S2);
 C=abs(C12); 

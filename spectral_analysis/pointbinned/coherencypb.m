@@ -74,15 +74,21 @@ end;
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass); 
 tapers=dpsschk(tapers,N,Fs); % check tapers
-[J1,Msp,Nsp1]=mtfftpb(data1,tapers,nfft);
-[J2,Msp,Nsp2]=mtfftpb(data2,tapers,nfft);
+global CHRONUXGPU
+if gpuDeviceCount && CHRONUXGPU
+    [J1,Msp,Nsp1]=mtfftpb(gpuArray(data1), gpuArray(tapers), nfft);
+    [J2,Msp,Nsp2]=mtfftpb(gpuArray(data2), gpuArray(tapers), nfft);
+else
+    [J1,Msp,Nsp1]=mtfftpb(data1,tapers,nfft);
+    [J2,Msp,Nsp2]=mtfftpb(data2,tapers,nfft);
+end
 zerosp=zeros(1,Ch); % initialize the zerosp variable
 zerosp(Nsp1==0 | Nsp2==0)=1; % set the zerosp variable
 J1=J1(findx,:,:);
 J2=J2(findx,:,:);
-S12=squeeze(mean(conj(J1).*J2,2));
-S1=squeeze(mean(conj(J1).*J1,2));
-S2=squeeze(mean(conj(J2).*J2,2));
+S12=gather(squeeze(mean(conj(J1).*J2,2)));
+S1=gather(squeeze(mean(conj(J1).*J1,2)));
+S2=gather(squeeze(mean(conj(J2).*J2,2)));
 if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
 C12=S12./sqrt(S1.*S2);
 C=abs(C12);

@@ -81,6 +81,9 @@ end;
 %
 % theoretical, asymptotic confidence level
 %
+% This is based on equation 7.82 (page 209) in Observed Brain Dynamics (Mitra & Bokil). 
+% The equation is used in reverse (i.e. given that the probability is p (e.g. 0.05), 
+% what is the corresponding theta (confidence level)?
 if dof <= 2
    confC = 1;
 else     
@@ -102,24 +105,23 @@ if errchk==1;
    phistd=reshape(phistd,[nf Ch]);
 elseif errchk==2;
     tcrit=tinv(pp,dof-1);
+    
+    % code for > 2-fold faster alternative: 
+    J1J2 = conj(J1).*J2;
+    J1J2_2 = sum(J1J2, 2);
+    J1c = J1.*conj(J1);
+    J1_2 = sum(J1c, 2);
+    J2c = J2.*conj(J2);
+    J2_2 = sum(J2c, 2);
+
     for k=1:dim; % dim is the number of 'independent' estimates
-        indxk=setdiff(1:dim,k);
-        J1k=J1(:,indxk,:);
-        J2k=J2(:,indxk,:);
-        eJ1k=squeeze(sum(J1k.*conj(J1k),2));
-        eJ2k=squeeze(sum(J2k.*conj(J2k),2));
-        eJ12k=squeeze(sum(conj(J1k).*J2k,2)); 
-        Cxyk=eJ12k./sqrt(eJ1k.*eJ2k);
+        eJ1k_a=squeeze(J1_2 - J1c(:,k,:));
+        eJ2k_a=squeeze(J2_2 - J2c(:,k,:));
+        eJ12k_a=squeeze(J1J2_2 - J1J2(:, k, :));
+        Cxyk=eJ12k_a./sqrt(eJ1k_a.*eJ2k_a);        
         absCxyk=abs(Cxyk);
         atanhCxyk(k,:,:)=sqrt(2*dim-2)*atanh(absCxyk); % 1-drop estimate of z
         phasefactorxyk(k,:,:)=Cxyk./absCxyk;
-%         indxk=setdiff(1:dim,k);
-%         J1jk=J1(:,indxk,:);
-%         J2jk=J2(:,indxk,:);
-%         eJ1jk=squeeze(sum(J1jk.*conj(J1jk),2));
-%         eJ2jk=squeeze(sum(J2jk.*conj(J2jk),2));
-%         eJ12jk=squeeze(sum(conj(J1jk).*J2jk,2)); 
-%         atanhCxyjk(k,:,:)=sqrt(2*dim-2)*atanh(abs(eJ12jk)./sqrt(eJ1jk.*eJ2jk));
     end; 
     atanhC=sqrt(2*dim-2)*atanh(C); % z
     sigma12=sqrt(dim-1)*squeeze(std(atanhCxyk,1,1)); % Jackknife estimate std(z)=sqrt(dim-1)*std of 1-drop estimates

@@ -22,9 +22,8 @@ NE=length(E);
 nwinl=round(win(1)*Fs);
 nwinr=round(win(2)*Fs);
 nE=floor(E*Fs)+1;
-datatmp=[];
-for n=1:NE;
-    indx=nE(n)-nwinl:nE(n)+nwinr-1; 
-    datatmp=[datatmp data(indx)];
+datatmp = zeros(nwinl+nwinr, NE);
+for n = 1:NE    
+    datatmp(:, n) = data(nE(n)-nwinl:nE(n)+nwinr-1); 
 end
 data=datatmp;
